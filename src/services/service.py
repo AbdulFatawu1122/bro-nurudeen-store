@@ -174,3 +174,48 @@ def makingPurchaseOrNewSupplier(quantity: int,amount: int, supplier_id: UUID, pr
 
 
 
+def all_sales(current_admin:TokenData, db: Session):
+    sales = db.query(Sale).all()
+
+    return {
+        "data": sales
+    }
+
+def all_supplies(current_admin:TokenData, db: Session):
+    supplies = db.query(Purchase).all()
+
+    return {
+        "data": supplies
+    }
+
+
+def update_product_price(product_id:UUID, current_admin:TokenData, db:Session, from_data:models.AddProduct):
+
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+
+    if not product:
+        raise HTTPException(
+            detail="Product Does not Exist",
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+
+
+def delete_product(product_id:UUID, current_admin:TokenData, db:Session):
+
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+
+    if not product:
+        raise HTTPException(
+            detail="Product Does not Exist",
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+
+
+    db.delete(product)
+    db.commit()
+
+    return {
+        "message": "product deleted succefully"
+    }
+
+

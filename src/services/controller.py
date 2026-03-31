@@ -29,6 +29,14 @@ async def allProducts(current_admin: CurrentAdmin, db:DbSession):
 async def allSuppliers(current_admin: CurrentAdmin, db:DbSession):
     return service.all_suppliers(db=db, current_admin=current_admin)
 
+@router.get("/all-sales")
+async def allSales(current_admin: CurrentAdmin, db:DbSession):
+    return service.all_sales(db=db, current_admin=current_admin)
+
+@router.get("/all-supplies")
+async def allSupplies(current_admin: CurrentAdmin, db:DbSession):
+    return service.all_supplies(db=db, current_admin=current_admin)
+
 @router.post("/sale")
 async def making_a_sale(
              customer_name:str,
@@ -68,11 +76,6 @@ async def NewSupply(quantity: int,amount: int, supplier_id: UUID, product_id: UU
         current_admin=current_admin
     )
 
-
-
-
-
-
-
-
-
+@router.delete("/delete-product")
+async def DeleteProduct(product_id:UUID, current_admin:CurrentAdmin, db:DbSession):
+    return service.delete_product(product_id=product_id, current_admin=current_admin, db=db)
