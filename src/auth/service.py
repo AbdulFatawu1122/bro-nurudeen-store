@@ -84,15 +84,12 @@ def create_access_token(email: str, admin_id:UUID, expires_delta:timedelta) -> s
 def verify_token(token: str) -> models.TokenData:
     try:
         payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
-        admin_id: str = payload.get("admin_id")
+        admin_id: str = payload.get("id")
         return models.TokenData(admin_id=admin_id)
     except JWTError:
         raise HTTPException(
             detail="Token Invalid or expired.", status_code=status.HTTP_403_FORBIDDEN
         )
-
-
-
 
 #Register new admins
 def register_admin(db: Session, admin:models.RegisterAdmin):

@@ -29,6 +29,13 @@ def all_suppliers(current_admin:TokenData, db: Session):
         "data": suppliers
     }
 
+def get_current_admin(current_admin:UUID, db: Session):
+    admin = db.query(Admin).filter(Admin.admin_id == current_admin).first()
+
+    return {
+        "data": admin
+    }
+
 def add_new_product(form_data: models.AddProduct, current_admin:TokenData, db: Session):
     db_new_product = Product(
         name=form_data.name.lower(),

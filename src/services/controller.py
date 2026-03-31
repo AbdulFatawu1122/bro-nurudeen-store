@@ -25,6 +25,10 @@ async def allProducts(current_admin: CurrentAdmin, db:DbSession):
     return service.all_products(current_admin=current_admin, db=db)
 
 
+@router.get("/current-admin")
+async def current_admin_incharge(current_admin: CurrentAdmin, db:DbSession):
+    return service.get_current_admin(db=db, current_admin=current_admin.get_uuid())
+
 @router.get("/all-suppliers")
 async def allSuppliers(current_admin: CurrentAdmin, db:DbSession):
     return service.all_suppliers(db=db, current_admin=current_admin)
