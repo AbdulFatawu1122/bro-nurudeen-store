@@ -1,4 +1,4 @@
-from sqlalchemy import Column, UUID, Integer, String, Boolean, ForeignKey, Date, DateTime
+from sqlalchemy import Column, UUID, Integer, Float, String, Boolean, ForeignKey, Date, DateTime
 from sqlalchemy.orm import relationship #relationship between entities
 from datetime import timezone, date, datetime
 import uuid
@@ -36,11 +36,31 @@ class Sale(Base):
     customer_name = Column(Integer, nullable=True)
     customer_number = Column(Integer, nullable=True)
     date = Column(Date, nullable=True, default=date.today())
-    amount = Column(Integer, nullable=True)
+    amount = Column(Float, nullable=True)
+
+    payment_status = Column(Boolean, nullable=True) # 0/false for not payed(on credit) and 1/true means payed
 
     #foreign columns
     admin_id = Column(UUID(as_uuid=True), ForeignKey("admins.admin_id"))
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.product_id"))
+
+
+class SaleHistory(Base):
+    __tablename__ = "saleshist"
+
+    salehistId = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4())
+    quantity_sold = Column(Integer, nullable=True)
+    customer_name = Column(String, nullable=True)
+    customer_number = Column(String, nullable=True)
+    date = Column(Date, nullable=True, default=date.today())
+    amount = Column(Float, nullable=True)
+    current_method = Column(String, nullable=True) # On credit or on cash
+    first_payment_method = Column(String, nullable=True)
+
+    admin_name = Column(String, nullable=True)
+    product_name = Column(String, nullable=True)
+
+
 
 
 class Supplier(Base):
@@ -59,7 +79,10 @@ class Purchase(Base):
     purchase_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     quantity = Column(Integer, nullable=False)
     date = Column(Date, nullable=False, default=date.today())
-    amount = Column(Integer, nullable=True)
+    amount = Column(Float, nullable=True)
+
+    payment_status = Column(Boolean, nullable=True)
+
 
     #foreign keys
     supplier_id = Column(UUID(as_uuid=True), ForeignKey("suppliers.supplier_id"))
@@ -67,5 +90,20 @@ class Purchase(Base):
     admin_id = Column(UUID(as_uuid=True), ForeignKey("admins.admin_id"))
 
 
+class PurchaseHistory(Base):
+    __tablename__ = "purchasehist"
+
+    purchaseHistId = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4())
+
+    quantity = Column(Integer, nullable=True)
+    date = Column(Date, nullable=True, default=date.today())
+    amount = Column(Float, nullable=True)
+
+    current_method = Column(String, nullable=True) # On credit or on cash
+    first_payment_method = Column(String, nullable=True)
+
+    supplier_name = Column(String, nullable=True)
+    product_name = Column(String, nullable=True)
+    admin_name = Column(String, nullable=True)
 
 

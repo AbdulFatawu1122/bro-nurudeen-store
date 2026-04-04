@@ -48,6 +48,7 @@ async def making_a_sale(
              amount: int,
              quantity_sold: int,
              product_id: UUID,
+             payment_status: bool,
              db:DbSession,
              current_admin: CurrentAdmin):
     
@@ -56,6 +57,7 @@ async def making_a_sale(
         customer_name=customer_name,
         customer_number=customer_number,
         amount=amount,
+        payment_status=payment_status,
         quantity_sold=quantity_sold,
         product_id=product_id,
         current_admin=current_admin,
@@ -70,14 +72,15 @@ async def addNewSupplier(db: DbSession, input_data: models.Supplier, current_adm
 
 
 @router.post("/new-supply")
-async def NewSupply(quantity: int,amount: int, supplier_id: UUID, product_id: UUID, db: DbSession, current_admin:CurrentAdmin):
+async def NewSupply(quantity: int,amount: int, supplier_id: UUID, product_id: UUID, payment_method: bool,  db: DbSession, current_admin:CurrentAdmin):
     return service.makingPurchaseOrNewSupplier(
         quantity=quantity,
         amount=amount,
         supplier_id=supplier_id,
         product_id=product_id,
         db=db, 
-        current_admin=current_admin
+        current_admin=current_admin,
+        payment_method=payment_method
     )
 
 @router.delete("/delete-product")
@@ -88,3 +91,29 @@ async def DeleteProduct(product_id:UUID, current_admin:CurrentAdmin, db:DbSessio
 @router.delete("/delete-supplier")
 async def DeleteSupplier(supplier_id:UUID, current_admin:CurrentAdmin, db:DbSession):
     return service.delete_supplier(supplier_id=supplier_id, current_admin=current_admin, db=db)
+
+
+@router.get("/depts")
+async def Get_all_depts(db: DbSession, current_admin: CurrentAdmin, sort_by: bool):
+    return service.get_all_deptors(
+        db=db, 
+        current_admin=current_admin,
+        sort_by=sort_by
+    )
+
+@router.get("/update-dept")
+async def update_dept(db: DbSession, current_admin: CurrentAdmin, sorted_by: bool, dept_id: UUID):
+    return service.update_dept_status(
+        db=db,
+        sorted_by=sorted_by,
+        current_admin=current_admin,
+        dept_id=dept_id
+    )
+
+@router.get("/update-price")
+async def update_product_price(new_price: float, product_id: UUID, db:DbSession, current_admin: CurrentAdmin):
+    return service.update_product_price(
+        new_price=new_price,
+        product_id=product_id,
+        db=db, current_admin=current_admin
+    )
