@@ -1,4 +1,5 @@
 from uuid import UUID
+from datetime import date, timedelta
 
 
 #internal imports
@@ -215,18 +216,30 @@ def makingPurchaseOrNewSupplier(quantity: int,amount: int, supplier_id: UUID, pr
     }
 
 
-def all_sales(current_admin:TokenData, db: Session):
-    sales = db.query(SaleHistory).order_by(SaleHistory.date).all()
+def all_sales(current_admin:TokenData, db: Session, days: int, limit: int, page: int):
+    offset = (page - 1) * limit
+    start_date = date.today() - timedelta(days=days)
+    sales = db.query(SaleHistory).filter(SaleHistory.date >= start_date).order_by(desc(SaleHistory.date)).limit(limit + 1).offset(offset).all()
+
+    has_more = len(sales) > limit
+    data = sales[:limit]
 
     return {
-        "data": sales
+        "data": data,
+        "has_more": has_more
     }
 
-def all_supplies(current_admin:TokenData, db: Session):
-    supplies = db.query(PurchaseHistory).order_by(PurchaseHistory.date).all()
+def all_supplies(current_admin:TokenData, db: Session, days: int, limit: int, page: int):
+    offset = (page - 1) * limit
+    start_date = date.today() - timedelta(days=days)
+    supplies = db.query(PurchaseHistory).filter(PurchaseHistory.date >= start_date).order_by(desc(PurchaseHistory.date)).limit(limit + 1).offset(offset).all()
+
+    has_more = len(supplies) > limit
+    data = supplies[:limit]
 
     return {
-        "data": supplies
+        "data": data,
+        "has_more": has_more
     }
 
 

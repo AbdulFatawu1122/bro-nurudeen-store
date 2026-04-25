@@ -34,12 +34,12 @@ async def allSuppliers(current_admin: CurrentAdmin, db:DbSession):
     return service.all_suppliers(db=db, current_admin=current_admin)
 
 @router.get("/all-sales")
-async def allSales(current_admin: CurrentAdmin, db:DbSession):
-    return service.all_sales(db=db, current_admin=current_admin)
+async def allSales(current_admin: CurrentAdmin, db:DbSession, days: int = 7, limit: int = 20, page: int = 1):
+    return service.all_sales(db=db, current_admin=current_admin, days=days, limit=limit, page=page)
 
 @router.get("/all-supplies")
-async def allSupplies(current_admin: CurrentAdmin, db:DbSession):
-    return service.all_supplies(db=db, current_admin=current_admin)
+async def allSupplies(current_admin: CurrentAdmin, db:DbSession, days: int = 7, limit: int = 20, page: int = 1):
+    return service.all_supplies(db=db, current_admin=current_admin, days=days, limit=limit, page=page)
 
 @router.post("/sale")
 async def making_a_sale(

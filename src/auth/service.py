@@ -92,7 +92,13 @@ def verify_token(token: str) -> models.TokenData:
         )
 
 #Register new admins
-def register_admin(db: Session, admin:models.RegisterAdmin):
+def register_admin(db: Session, admin:models.RegisterAdmin, current_admin:UUID):
+    login_admin_admin = db.query(Admin).filter(Admin.admin_id == current_admin).first()
+    if not login_admin_admin:
+        raise HTTPException(
+            status_code=404,
+            detail="Only Admins can register new admins, contact the administrator to register you"
+        )
     try:
         #firts hashed admin password
         hashed_password = get_password_hashed(admin.password)
@@ -120,13 +126,28 @@ def register_admin(db: Session, admin:models.RegisterAdmin):
                 "position": db_new_admin.position
             }
         }
-    except IntegrityError:
-        raise HTTPException(
-            detail="Email already in used",
-            status_code=status.HTTP_409_CONFLICT
-        )
-
-
+    except IntegrityError as e:
+        error_msg = str(e.orig).lower()
+        if "email" in error_msg:
+            raise HTTPException(
+                detail="This email is already in use by another admin.",
+                status_code=status.HTTP_409_CONFLICT
+            )
+        elif "phone" in error_msg:
+            raise HTTPException(
+                detail="This phone number is already in use by another admin.",
+                status_code=status.HTTP_409_CONFLICT
+            )
+        elif "username" in error_msg:
+            raise HTTPException(
+                detail="This username is already in use by another admin.",
+                status_code=status.HTTP_409_CONFLICT
+            )
+        else:
+            raise HTTPException(
+                detail="A database integrity error occurred. Please check your inputs.",
+                status_code=status.HTTP_409_CONFLICT
+            )
 
 #def get current admin
 def get_current_admin(token:Annotated[str, Depends(oauth2_schema)]) -> models.TokenData:

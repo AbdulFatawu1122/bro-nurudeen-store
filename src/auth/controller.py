@@ -3,6 +3,7 @@ from ..database.core import DbSession
 from . import models, service
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
+from ..auth.service import CurrentAdmin
 
 
 router = APIRouter(
@@ -13,8 +14,8 @@ router = APIRouter(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def register_new_admin(request: Request, db:DbSession, admin: models.RegisterAdmin):
-    service.register_admin(db=db, admin=admin)
+async def register_new_admin(request: Request, db:DbSession, admin: models.RegisterAdmin, current_admin: CurrentAdmin):
+    service.register_admin(db=db, admin=admin, current_admin=current_admin.get_uuid())
     return {"message": "You are a new Admin"}
 
 @router.post("/token", response_model=models.Token)
