@@ -387,3 +387,23 @@ def delete_supply_history(supply_id: UUID, current_admin: TokenData, db: Session
     return {
         "message": "Supply history deleted successfully"
     }
+
+
+def update_product_name(db: Session, current_admin: TokenData, new_name: str, product_id: UUID):
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+
+    if not product:
+        raise HTTPException(
+            detail="Product does not Exist",
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    product.name = new_name.lower()
+
+    db.commit()
+    db.refresh(product)
+
+    return {
+        "message": "Name of a product was successfully changed",
+        "data": product
+    }

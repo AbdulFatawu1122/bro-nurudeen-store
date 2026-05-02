@@ -111,3 +111,13 @@ async def DeleteSaleHistory(sale_id: UUID, current_admin: CurrentAdmin, db: DbSe
 @router.delete("/delete-supply-history")
 async def DeleteSupplyHistory(supply_id: UUID, current_admin: CurrentAdmin, db: DbSession):
     return service.delete_supply_history(supply_id=supply_id, current_admin=current_admin, db=db)
+
+
+@router.get("/update-name")
+async def update_product_name(new_name: str, product_id: UUID, db:DbSession, current_admin: CurrentAdmin):
+    return service.update_product_name(
+        new_name=new_name,
+        product_id=product_id,
+        db=db, 
+        current_admin=current_admin
+    )
