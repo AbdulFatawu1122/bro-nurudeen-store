@@ -64,9 +64,9 @@ class Supplier(Base):
     __tablename__  = "suppliers"
 
     supplier_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    firstname = Column(String, nullable=False)
-    lastname = Column(String, nullable=False)
-    phone = Column(String, nullable=False)
+    firstname = Column(String, nullable=True)
+    lastname = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
     email = Column(String, nullable=True)
 
 

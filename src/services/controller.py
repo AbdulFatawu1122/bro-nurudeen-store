@@ -6,6 +6,7 @@ from uuid import UUID
 from . import service, models
 from ..database.core import DbSession
 from ..auth.service import CurrentAdmin
+from datetime import date
 
 
 
@@ -42,26 +43,13 @@ async def allSupplies(current_admin: CurrentAdmin, db:DbSession, days: int = 7, 
     return service.all_supplies(db=db, current_admin=current_admin, days=days, limit=limit, page=page)
 
 @router.post("/sale")
-async def making_a_sale(
-             customer_name:str,
-             customer_number: str,
-             amount: int,
-             quantity_sold: int,
-             product_id: UUID,
-             payment_status: bool,
-             db:DbSession,
-             current_admin: CurrentAdmin):
+async def making_a_sale(db:DbSession, current_admin: CurrentAdmin, form_data: models.SaleMake):
     
     #go
     return service.saleMake(
-        customer_name=customer_name,
-        customer_number=customer_number,
-        amount=amount,
-        payment_status=payment_status,
-        quantity_sold=quantity_sold,
-        product_id=product_id,
-        current_admin=current_admin,
-        db=db
+        form_data=form_data,
+        current_admin=current_admin.get_uuid(),
+        db=db,
     )
     
 
@@ -72,15 +60,11 @@ async def addNewSupplier(db: DbSession, input_data: models.Supplier, current_adm
 
 
 @router.post("/new-supply")
-async def NewSupply(quantity: int,amount: int, supplier_id: UUID, product_id: UUID, payment_method: bool,  db: DbSession, current_admin:CurrentAdmin):
+async def NewSupply(form_data: models.PurchaseMake, db: DbSession, current_admin:CurrentAdmin):
     return service.makingPurchaseOrNewSupplier(
-        quantity=quantity,
-        amount=amount,
-        supplier_id=supplier_id,
-        product_id=product_id,
-        db=db, 
-        current_admin=current_admin,
-        payment_method=payment_method
+        current_admin=current_admin.get_uuid(),
+        db=db,
+        form_data=form_data
     )
 
 @router.delete("/delete-product")

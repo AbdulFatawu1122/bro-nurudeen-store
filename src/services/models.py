@@ -17,14 +17,13 @@ class ProductAddedResponse(AddProduct):
 
 class SaleMake(BaseModel):
     quantity_sold: int
-    customer_name: str
+    customer_name: str | None = None
     customer_number: str
     amount: float
     payment_status: bool
+    date: date
 
     product_id: UUID
-    admin_id: UUID
-
 
 class Supplier(BaseModel):
     firstname: str
@@ -37,6 +36,7 @@ class PurchaseMake(BaseModel):
     quantity: int
     amount: float
     payment_status: bool
+    date: date
 
     supplier_id: UUID
     product_id: UUID

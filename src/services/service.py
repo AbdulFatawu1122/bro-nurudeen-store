@@ -58,17 +58,18 @@ def add_new_product(form_data: models.AddProduct, current_admin:TokenData, db: S
 
 
 
-def saleMake(customer_name:str,
-             customer_number: str,
-             amount: float,
-             quantity_sold: int,
-             product_id: UUID,
-             payment_status: bool,
-             current_admin:TokenData, db: Session):
+def saleMake(form_data: models.SaleMake, current_admin:UUID, db: Session):
+
+    admin = db.query(Admin).filter(Admin.admin_id == current_admin).first()
+    if not admin:
+        raise HTTPException(
+            status_code=404, 
+            detail="Admin not found"
+        )
     
-    product =  db.query(Product).filter(Product.product_id == product_id).first()
+    product =  db.query(Product).filter(Product.product_id == form_data.product_id).first()
     
-    if quantity_sold <= 0:
+    if form_data.quantity_sold <= 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="The quantity to sold can not be zero or less than zero"
@@ -80,24 +81,23 @@ def saleMake(customer_name:str,
             detail="The product you are trying to sell does not exsit in your products. Add the Product Information Before you can sell it here"
         )
 
-    if quantity_sold > product.quantityInStock:
+    if form_data.quantity_sold > product.quantityInStock:
         raise HTTPException(
             detail="You can not sell this product because the quantity in stock is less than what your are to sell!",
             status_code=status.HTTP_409_CONFLICT
         )
     
-    product.quantityInStock -= quantity_sold
+    product.quantityInStock -= form_data.quantity_sold
 
     db_new_sale = Sale(
-        quantity_sold=quantity_sold,
-        customer_name=customer_name,
-        customer_number=customer_number,
-        amount=amount,
-        product_id=product_id,
-        payment_status= payment_status,
-        admin_id= current_admin.get_uuid()
+        quantity_sold=form_data.quantity_sold,
+        customer_name=form_data.customer_name,
+        customer_number=form_data.customer_number,
+        amount=form_data.amount,
+        product_id=form_data.product_id,
+        payment_status= form_data.payment_status,
+        admin_id= current_admin,
     )
-
     admin_who_process = db.query(Admin).filter(Admin.admin_id == db_new_sale.admin_id).first()
     product_sell = db.query(Product).filter(Product.product_id == db_new_sale.product_id).first()
 
@@ -109,8 +109,8 @@ def saleMake(customer_name:str,
         customer_number= db_new_sale.customer_number,
         date= db_new_sale.date,
         amount= db_new_sale.amount,
-        current_method = "cash" if payment_status else "credit",
-        first_payment_method= "cash" if payment_status else "credit",
+        current_method = "cash" if form_data.payment_status else "credit",
+        first_payment_method= "cash" if form_data.payment_status else "credit",
         admin_name = f"{admin_who_process.firstname} {admin_who_process.lastname}" if admin_who_process else "N/A",
         product_name = product_sell.name if product else "N/A",
     )
@@ -129,13 +129,6 @@ def saleMake(customer_name:str,
     
 
 def add_supplier(form_data: models.Supplier, current_admin: TokenData, db: Session):
-    supplier = db.query(Supplier).filter(Supplier.phone == form_data.phone).first()
-
-    if supplier:
-        raise HTTPException(
-            detail="This Supplier wiht the same phone number already exist",
-            status_code=status.HTTP_409_CONFLICT
-        )
     db_new_supplier = Supplier(
         firstname= form_data.firstname.lower(),
         lastname= form_data.lastname.lower(),
@@ -152,20 +145,26 @@ def add_supplier(form_data: models.Supplier, current_admin: TokenData, db: Sessi
     }
 
 
-def makingPurchaseOrNewSupplier(quantity: int,amount: int, supplier_id: UUID, product_id: UUID, current_admin:TokenData, payment_method: bool, db:Session):
-    if quantity <= 0:
+def makingPurchaseOrNewSupplier(form_data: models.PurchaseMake, current_admin: UUID, db:Session):
+    admin = db.query(Admin).filter(Admin.admin_id == current_admin).first()
+    if not admin:
+        raise HTTPException(
+            status_code=404, 
+            detail="Admin not found"
+        )
+    if form_data.quantity <= 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="A supply quantity can not be 0 or less"
         )
-    product = db.query(Product).filter(Product.product_id ==  product_id).first()
+    product = db.query(Product).filter(Product.product_id ==  form_data.product_id).first()
     if not product:
         raise HTTPException(
             detail="Products to supply in does not exist in your products, add it to your products before suppling it",
             status_code=status.HTTP_404_NOT_FOUND
         )
 
-    supplier = db.query(Supplier).filter(Supplier.supplier_id == supplier_id).first()
+    supplier = db.query(Supplier).filter(Supplier.supplier_id == form_data.supplier_id).first()
     if not supplier:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -173,16 +172,15 @@ def makingPurchaseOrNewSupplier(quantity: int,amount: int, supplier_id: UUID, pr
         )
     
 
-    product.quantityInStock += quantity
+    product.quantityInStock += form_data.quantity
     db_new_supply = Purchase(
-        quantity=quantity,
-        amount=amount,
-        supplier_id=supplier_id,
-        product_id=product_id,
-        payment_status= payment_method,
-        admin_id=current_admin.get_uuid()
+        quantity=form_data.quantity,
+        amount=form_data.amount,
+        supplier_id=form_data.supplier_id,
+        product_id=form_data.product_id,
+        payment_status= form_data.payment_status,
+        admin_id=current_admin,
     )
-
     admin_who_process = db.query(Admin).filter(Admin.admin_id == db_new_supply.admin_id).first()
 
     product_buys = db.query(Product).filter(Product.product_id == db_new_supply.product_id).first()
@@ -194,11 +192,12 @@ def makingPurchaseOrNewSupplier(quantity: int,amount: int, supplier_id: UUID, pr
         purchaseHistId=uuid.uuid4(),
         quantity= db_new_supply.quantity,
         amount = db_new_supply.amount,
-        current_method = "cash" if payment_method else "credit",
-        first_payment_method= "cash" if payment_method else "credit",
+        current_method = "cash" if form_data.payment_status else "credit",
+        first_payment_method= "cash" if form_data.payment_status else "credit",
         supplier_name= f"{supplier_name.firstname} {supplier_name.lastname}",
         product_name= product_buys.name,
-        admin_name = f"{admin_who_process.firstname} {admin_who_process.lastname}"
+        admin_name = f"{admin_who_process.firstname} {admin_who_process.lastname}",
+        date=db_new_supply.date
     )
     db.add(db_new_supply)
     db.add(db_new_purchase_history)
