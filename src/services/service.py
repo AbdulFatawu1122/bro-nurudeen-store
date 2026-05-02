@@ -97,6 +97,7 @@ def saleMake(form_data: models.SaleMake, current_admin:UUID, db: Session):
         product_id=form_data.product_id,
         payment_status= form_data.payment_status,
         admin_id= current_admin,
+        date=form_data.date
     )
     admin_who_process = db.query(Admin).filter(Admin.admin_id == db_new_sale.admin_id).first()
     product_sell = db.query(Product).filter(Product.product_id == db_new_sale.product_id).first()
@@ -180,6 +181,7 @@ def makingPurchaseOrNewSupplier(form_data: models.PurchaseMake, current_admin: U
         product_id=form_data.product_id,
         payment_status= form_data.payment_status,
         admin_id=current_admin,
+        date=form_data.date
     )
     admin_who_process = db.query(Admin).filter(Admin.admin_id == db_new_supply.admin_id).first()
 
