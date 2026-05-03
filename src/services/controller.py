@@ -121,3 +121,11 @@ async def update_product_name(new_name: str, product_id: UUID, db:DbSession, cur
         db=db, 
         current_admin=current_admin
     )
+
+@router.get("/business-cash")
+async def get_business_cash(db: DbSession, current_admin: CurrentAdmin):
+    return service.get_business_cash(db=db)
+
+@router.get("/cash-ledger")
+async def get_cash_ledger(db: DbSession, current_admin: CurrentAdmin, limit: int = 100, page: int = 1):
+    return service.get_cash_ledger(db=db, limit=limit, page=page)

@@ -103,3 +103,16 @@ class PurchaseHistory(Base):
     admin_name = Column(String, nullable=True)
 
 
+class CashLedger(Base):
+    __tablename__ = "cash_ledger"
+
+    ledger_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    transaction_type = Column(String, nullable=False) # SALE, PURCHASE, DEBT_SETTLEMENT, EXPENSE
+    amount = Column(Float, nullable=False)
+    flow_type = Column(String, nullable=False) # IN or OUT
+    balance_after = Column(Float, nullable=False)
+    description = Column(String, nullable=True)
+    reference_id = Column(UUID(as_uuid=True), nullable=True)
+    date = Column(DateTime(timezone=True), nullable=False, default=lambda : datetime.now(timezone.utc))
+
+

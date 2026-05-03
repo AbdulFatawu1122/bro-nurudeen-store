@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from src.auth.models import TokenData
 from ..database.core import DbSession
 from ..auth.service import CurrentAdmin
-from src.entities.main_entites_home import Product, Supplier, Admin, Sale, Purchase, SaleHistory, PurchaseHistory
+from src.entities.main_entites_home import Product, Supplier, Admin, Sale, Purchase, SaleHistory, PurchaseHistory, CashLedger
 from sqlalchemy import asc, desc
 import uuid
 
@@ -14,7 +14,8 @@ import uuid
 from . import models
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, desc, asc
+from sqlalchemy import or_, desc, asc, func
+from datetime import datetime, timezone
 
 
 def all_products(current_admin: TokenData, db:Session):
@@ -118,6 +119,18 @@ def saleMake(form_data: models.SaleMake, current_admin:UUID, db: Session):
 
     db.add(db_new_sale)
     db.add(db_new_saleHist)
+    
+    # Record in Cash Ledger if it was a cash sale
+    if form_data.payment_status:
+        record_cash_transaction(
+            db=db,
+            transaction_type="SALE",
+            amount=form_data.amount,
+            flow_type="IN",
+            description=f"Cash Sale: {product_sell.name} (Qty: {form_data.quantity_sold})",
+            reference_id=db_new_sale.sale_id
+        )
+
     db.commit()
     db.refresh(db_new_sale)
     db.refresh(product)
@@ -203,6 +216,18 @@ def makingPurchaseOrNewSupplier(form_data: models.PurchaseMake, current_admin: U
     )
     db.add(db_new_supply)
     db.add(db_new_purchase_history)
+    
+    # Record in Cash Ledger if it was a cash purchase
+    if form_data.payment_status:
+        record_cash_transaction(
+            db=db,
+            transaction_type="PURCHASE",
+            amount=form_data.amount,
+            flow_type="OUT",
+            description=f"Stock Purchase: {product_buys.name} from {supplier_name.firstname} {supplier_name.lastname} (Qty: {form_data.quantity})",
+            reference_id=db_new_supply.purchase_id
+        )
+
     db.commit()
     db.refresh(db_new_supply)
     db.refresh(product)
@@ -327,6 +352,28 @@ def update_dept_status(db: Session, current_admin: TokenData, sorted_by: bool, d
             )
 
     dept.current_method = "cash"
+    
+    # Record in Cash Ledger for Debt Settlement
+    if sorted_by:
+        # Customer settled debt
+        record_cash_transaction(
+            db=db,
+            transaction_type="DEBT_SETTLEMENT",
+            amount=dept.amount,
+            flow_type="IN",
+            description=f"Customer Debt Settled: {dept.customer_name} for {dept.product_name}",
+            reference_id=dept.salehistId
+        )
+    else:
+        # We settled supplier debt
+        record_cash_transaction(
+            db=db,
+            transaction_type="DEBT_SETTLEMENT",
+            amount=dept.amount,
+            flow_type="OUT",
+            description=f"Supplier Debt Settled: {dept.supplier_name} for {dept.product_name}",
+            reference_id=dept.purchaseHistId
+        )
 
     db.commit()
     db.refresh(dept)
@@ -408,4 +455,59 @@ def update_product_name(db: Session, current_admin: TokenData, new_name: str, pr
     return {
         "message": "Name of a product was successfully changed",
         "data": product
+    }
+
+def get_business_cash(db: Session):
+    # Fetch the latest ledger entry to get the current balance
+    # Added balance_after as a tie-breaker for identical timestamps
+    latest_entry = db.query(CashLedger).order_by(desc(CashLedger.date), desc(CashLedger.balance_after)).first()
+    current_cash = latest_entry.balance_after if latest_entry else 0.0
+    
+    # We can still calculate the totals for the dashboard display
+    total_sales_cash = db.query(func.sum(SaleHistory.amount)).filter(SaleHistory.current_method == "cash").scalar() or 0.0
+    total_purchases_cash = db.query(func.sum(PurchaseHistory.amount)).filter(PurchaseHistory.current_method == "cash").scalar() or 0.0
+    
+    return {
+        "total_sales_cash": total_sales_cash,
+        "total_purchases_cash": total_purchases_cash,
+        "current_cash": current_cash
+    }
+
+def record_cash_transaction(db: Session, transaction_type: str, amount: float, flow_type: str, description: str, reference_id: UUID = None):
+    # Get the latest balance
+    latest_entry = db.query(CashLedger).order_by(desc(CashLedger.date)).first()
+    current_balance = latest_entry.balance_after if latest_entry else 0.0
+    
+    if flow_type == "IN":
+        new_balance = current_balance + amount
+    else:
+        new_balance = current_balance - amount
+        
+    new_ledger_entry = CashLedger(
+        ledger_id=uuid.uuid4(),
+        transaction_type=transaction_type,
+        amount=amount,
+        flow_type=flow_type,
+        balance_after=new_balance,
+        description=description,
+        reference_id=reference_id,
+        date=datetime.now(timezone.utc)
+    )
+    
+    db.add(new_ledger_entry)
+    return new_ledger_entry
+
+def get_cash_ledger(db: Session, limit: int = 100, page: int = 1):
+    offset = (page - 1) * limit
+    ledger = db.query(CashLedger).order_by(desc(CashLedger.date), desc(CashLedger.balance_after)).limit(limit).offset(offset).all()
+    total_count = db.query(CashLedger).count()
+    
+    # Get the current balance for the top of the table
+    latest_entry = db.query(CashLedger).order_by(desc(CashLedger.date), desc(CashLedger.balance_after)).first()
+    current_cash = latest_entry.balance_after if latest_entry else 0.0
+    
+    return {
+        "data": ledger,
+        "total": total_count,
+        "current_cash": current_cash
     }
