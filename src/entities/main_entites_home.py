@@ -23,8 +23,8 @@ class Product(Base):
 
     product_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False)
-    quantityInStock = Column(Integer, nullable=False, default=0)
-    pricePerUnit = Column(Integer, nullable=True)
+    quantityInStock = Column(Float, nullable=False, default=0)
+    pricePerUnit = Column(Float, nullable=True)
     productDetails = Column(String, nullable=True)
 
 
@@ -32,7 +32,7 @@ class Sale(Base):
     __tablename__ = "sales"
 
     sale_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    quantity_sold = Column(Integer, nullable=False, default=0)
+    quantity_sold = Column(Float, nullable=False, default=0)
     customer_name = Column(String, nullable=True)
     customer_number = Column(String, nullable=True)
     date = Column(Date, nullable=True, default=date.today)
@@ -48,7 +48,7 @@ class SaleHistory(Base):
     __tablename__ = "saleshist"
 
     salehistId = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    quantity_sold = Column(Integer, nullable=True)
+    quantity_sold = Column(Float, nullable=True)
     customer_name = Column(String, nullable=True)
     customer_number = Column(String, nullable=True)
     date = Column(Date, nullable=True, default=date.today)

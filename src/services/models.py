@@ -6,7 +6,7 @@ class AddProduct(BaseModel):
     name: str
     pricePerUnit: float
     productDetails: str
-    quantityInstock: int
+    quantityInstock: float
 
 class ProductAddedResponse(AddProduct):
     id: UUID
@@ -16,7 +16,7 @@ class ProductAddedResponse(AddProduct):
 
 
 class SaleMake(BaseModel):
-    quantity_sold: int
+    quantity_sold: float
     customer_name: str | None = None
     customer_number: str
     amount: float
@@ -44,7 +44,7 @@ class PurchaseMake(BaseModel):
 
 
 class  Sales_History(BaseModel):
-    quantity_sold: int
+    quantity_sold: float
     customer_name: str
     customer_number: str
     date: date
